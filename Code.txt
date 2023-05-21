@@ -1,0 +1,161 @@
+import it.unisa.dia.gas.jpbc.Element;
+import it.unisa.dia.gas.jpbc.Pairing;
+import it.unisa.dia.gas.jpbc.PairingParametersGenerator;
+import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
+import it.unisa.dia.gas.plaf.jpbc.pairing.e.TypeECurveGenerator;
+
+import java.math.BigInteger;
+
+public class DhinaBatch {
+
+    public static void main(String[] args){
+        int rBits = 160;
+        int qBits = 512;
+
+        PairingParametersGenerator pg = new TypeECurveGenerator(rBits, qBits);
+        Pairing pairing = PairingFactory.getPairing("params.properties");
+        PairingFactory.getInstance().setUsePBCWhenPossible(true);
+
+        System.out.println("\n\n System Initialization");
+        Element u = pairing.getG1().newRandomElement().getImmutable();
+        Element g = pairing.getG1().newRandomElement().getImmutable();
+
+        Element x = pairing.getZr().newRandomElement().getImmutable();
+        Element y = g.powZn(x);
+        System.out.println("u is : " + u);
+        System.out.println("g is : " + g);
+        System.out.println("x is : " + x);
+        System.out.println("y is : " + y);
+
+        Element b1 = pairing.getZr().newRandomElement().getImmutable();
+        Element b2 = pairing.getZr().newRandomElement().getImmutable();
+        Element b3 = pairing.getZr().newRandomElement().getImmutable();
+
+        Element c1 = pairing.getZr().newRandomElement().getImmutable();
+        Element c2 = pairing.getZr().newRandomElement().getImmutable();
+        Element c3 = pairing.getZr().newRandomElement().getImmutable();
+
+        Element k0 = pairing.getZr().newRandomElement().getImmutable();
+        Element k1 = pairing.getZr().newRandomElement().getImmutable();
+        Element k2 = pairing.getZr().newRandomElement().getImmutable();
+        Element keyword[] = new Element[3];
+        keyword[0] = k0;
+        keyword[1] = k1;
+        keyword[2] = k2;
+
+        Element indexvector[] = new Element[3];
+        indexvector[0] = pairing.getZr().newElement(new BigInteger("1"));
+        indexvector[1] = pairing.getZr().newElement(new BigInteger("1"));
+        indexvector[2] = pairing.getZr().newElement(new BigInteger("1"));
+
+        System.out.println("\n\n Index Generation\n");
+
+        System.out.println("Step 1:");
+
+        Element pik0 = pairing.getZr().newRandomElement().getImmutable();
+        Element pik1 = pairing.getZr().newRandomElement().getImmutable();
+        Element pik2 = pairing.getZr().newRandomElement().getImmutable();
+        System.out.println("pik0 is:"+pik0);
+        System.out.println("pik1 is:"+pik1);
+        System.out.println("pik2 is:"+pik2);
+        // step 2: For each keyword wk, the index vector is encrypted using
+        //         the exclusive or of vwk and f(pi(wk)).
+        //         In future, fpik0 will be replaced with a suitable pseudo-random function.
+        System.out.println("Step 2:");
+        Element fpik0 = pairing.getZr().newRandomElement().getImmutable();
+        Element fpik1 = pairing.getZr().newRandomElement().getImmutable();
+        Element fpik2 = pairing.getZr().newRandomElement().getImmutable();
+
+        Element evpiwk0 = pairing.getZr().newElement(new BigInteger(element_xor(indexvector[0].toString(), fpik0.toString())));
+        System.out.println("evpiwk0 is : " + evpiwk0);
+        Element evpiwk1 = pairing.getZr().newElement(new BigInteger(element_xor(indexvector[1].toString(), fpik1.toString())));
+        System.out.println("evpiwk1 is : " + evpiwk1);
+        Element evpiwk2 = pairing.getZr().newElement(new BigInteger(element_xor(indexvector[2].toString(), fpik2.toString())));
+        System.out.println("evpiwk2 is : " + evpiwk2);
+    
+        System.out.println("Step 3:");
+        Element swk0 = pairing.getZr().newElement(new BigInteger("1"));
+        Element swk1 = pairing.getZr().newElement(new BigInteger("1"));
+        Element swk2 = pairing.getZr().newElement(new BigInteger("1"));
+        System.out.println("swk0 is :"+swk0);
+        System.out.println("swk1 is :"+swk1);
+        System.out.println("swk2 is :"+swk2);
+
+        System.out.println("Step 4:");
+        Element ohm_block1_v1 = pairing.getG1().newRandomElement().getImmutable();
+        Element ohm_block1_v2 = pairing.getG1().newRandomElement().getImmutable();
+        Element ohm_block1_v3 = pairing.getG1().newRandomElement().getImmutable();
+        Element ohm_wk1 = ((ohm_block1_v1.add(ohm_block1_v2)).add(ohm_block1_v3)).powZn(x);
+
+        Element ohm_block2_v1 = pairing.getG1().newRandomElement().getImmutable();
+        Element ohm_block2_v2 = pairing.getG1().newRandomElement().getImmutable();
+        Element ohm_block2_v3 = pairing.getG1().newRandomElement().getImmutable();
+        Element ohm_wk2 = ((ohm_block2_v1.add(ohm_block2_v2)).add(ohm_block2_v3)).powZn(x);
+
+        Element ohm_block3_v1 = pairing.getG1().newRandomElement().getImmutable();
+        Element ohm_block3_v2 = pairing.getG1().newRandomElement().getImmutable();
+        Element ohm_block3_v3 = pairing.getG1().newRandomElement().getImmutable();
+        Element ohm_wk3 = ((ohm_block3_v1.add(ohm_block3_v2)).add(ohm_block3_v3)).powZn(x);
+
+        System.out.println("ohm_wk1 is " + ohm_wk1);
+        System.out.println("ohm_wk2 is " + ohm_wk2);
+        System.out.println("ohm_wk3 is " + ohm_wk3);
+        
+        Element sigma_file1_block1 = ((ohm_block1_v1.invert()).add(u.powZn(c1))).powZn(x);
+        Element sigma_file1_block2 = ((ohm_block1_v2.invert()).add(u.powZn(c2))).powZn(x);
+        Element sigma_file1_block3 = ((ohm_block1_v3.invert()).add(u.powZn(c3))).powZn(x);
+       
+        System.out.println("\n \n Trapdoor generation for the keywords to be searched.");
+        System.out.println("Let us assume that, we want search the blocks containing the keyword k0");
+        System.out.println("pik0 is : " + pik0);
+        System.out.println("fpik0 is : " + fpik0);
+        
+	Element v1 = pairing.getZr().newRandomElement().getImmutable();
+        Element v2 = pairing.getZr().newRandomElement().getImmutable();
+        System.out.println("v1 is : " + v1);
+        System.out.println("v2 is : " + v2);
+            
+        System.out.println("\n \n Proof Generation:");
+        System.out.println("Step 1:");
+        Element vw0 = pairing.getZr().newElement(new BigInteger(element_xor(evpiwk0.toString(), fpik0.toString())));
+        System.out.println("vw0 is : " + vw0);
+        
+        Element swk0_cs = pairing.getZr().newElement(new BigInteger("1"));
+        
+	Element T = ((sigma_file1_block1.powZn(v1)).add(sigma_file1_block2.powZn(v2))).add((ohm_wk1.powZn(v1)).add(ohm_wk2.powZn(v2)));
+        Element meu = (c1.mul(v1)).add(c2.mul(v2));
+        System.out.println("Step 2 : ");
+        System.out.println("T is : " + T);
+        System.out.println("meu is : " + meu);
+        
+        System.out.println("\n \n Proof Verification:");
+        Element LHS = pairing.pairing(T,g);
+        System.out.println("LHS is :" + LHS);
+
+        Element RHS = pairing.pairing((((ohm_block1_v2.add( ohm_block1_v3)).powZn(v1)).add((ohm_block2_v2.add( ohm_block2_v3)).powZn(v2))).add(u.powZn(meu)),y);
+        System.out.println("RHS is :" + RHS);
+
+        Element p1 = pairing.getG1().newRandomElement().getImmutable();
+        Element p2 = p1.invert().getImmutable();
+        System.out.println("\n \n For Rough use only : ");
+
+        System.out.println("p1 is : " + p1);
+        System.out.println("p2 is : " + p2);
+        Element p3 = p1.sub(p2);
+        System.out.println("p3 is : " + p3);
+        
+    }
+    public static String element_xor(String v1, String v2){
+        System.out.println("v1 is : " + v1);
+        System.out.println("v2 is : " + v2);
+        StringBuffer v3 = new StringBuffer();
+        for (int i=0;i<v1.length();i++){
+            v3.append(v1.charAt(i) ^ v2.charAt(i));
+        }
+        System.out.println("v3 is : " + v3);
+        return v3.toString();
+    }
+}
+
+
+
